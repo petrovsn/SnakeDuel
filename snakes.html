@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snake Duel</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        background: #111;
+        color: #eee;
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+    }
+
+    .game {
+        text-align: center;
+    }
+
+    h1 {
+        margin: 0 0 10px;
+        letter-spacing: 4px;
+    }
+
+    .controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+
+    button {
+        background: #222;
+        color: #eee;
+        border: 1px solid #555;
+        padding: 8px 16px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    button:hover {
+        background: #333;
+    }
+
+    .speed-control {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #1a1a1a;
+        border: 1px solid #333;
+        padding: 6px 10px;
+    }
+
+    #speedSlider {
+        width: 150px;
+        cursor: pointer;
+    }
+
+    #speedValue {
+        display: inline-block;
+        width: 20px;
+        font-weight: bold;
+    }
+
+    canvas {
+        background: #080808;
+        border: 2px solid #444;
+        display: block;
+        margin: auto;
+        image-rendering: pixelated;
+    }
+
+    .info {
+        display: flex;
+        justify-content: space-between;
+        width: 800px;
+        max-width: 95vw;
+        margin: 10px auto;
+        font-size: 18px;
+    }
+
+    .p1 {
+        color: #42e878;
+    }
+
+    .p2 {
+        color: #4da6ff;
+    }
+
+    .food {
+        color: #ff5050;
+    }
+
+    #message {
+        height: 30px;
+        margin-top: 8px;
+        font-size: 20px;
+        font-weight: bold;
+    }
+
+    .help {
+        color: #888;
+        font-size: 13px;
+        line-height: 1.6;
+        margin-top: 10px;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="game">
+
+    <h1>SNAKE DUEL</h1>
+
+    <div class="controls">
+
+        <button onclick="setMode('coop')">
+            2 ИГРОКА
+        </button>
+
+        <button onclick="setMode('bot')">
+            ПРОТИВ БОТА
+        </button>
+
+        <button onclick="restart()">
+            RESTART
+        </button>
+
+        <div class="speed-control">
+            <span>Скорость:</span>
+
+            <input
+                id="speedSlider"
+                type="range"
+                min="1"
+                max="10"
+                value="5"
+                oninput="setSpeed(this.value)"
+            >
+
+            <span id="speedValue">5</span>
+        </div>
+
+    </div>
+
+    <div class="info">
+
+        <span class="p1">
+            🟢 Игрок 1:
+            <span id="score1">0</span>
+        </span>
+
+        <span class="food">
+            Еда:
+            <span id="foodCount">0</span>
+        </span>
+
+        <span class="p2">
+            🔵
+            <span id="player2Name">Игрок 2</span>:
+            <span id="score2">0</span>
+        </span>
+
+    </div>
+
+    <canvas
+        id="game"
+        width="800"
+        height="600">
+    </canvas>
+
+    <div id="message"></div>
+
+    <div class="help">
+        Игрок 1: WASD<br>
+        Игрок 2: стрелки<br>
+        В режиме против бота синим управляет компьютер.<br>
+        R — перезапуск игры.
+    </div>
+
+</div>
+
+
+<script>
+
+// ============================================================
+// CONFIGURATION
+// ============================================================
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const CELL = 20;
+
+const COLS = canvas.width / CELL;
+const ROWS = canvas.height / CELL;
+
+
+// ============================================================
+// GAME STATE
+// ============================================================
+
+let mode = "coop";
+
+let gameOver = false;
+
+let snake1;
+let snake2;
+
+let food;
+
+let score1 = 0;
+let score2 = 0;
+let foodCount = 0;
+
+let lastTick = 0;
+
+
+// ============================================================
+// SPEED
+// ============================================================
+
+// 1 = slow
+// 10 = fast
+
+let speed = 5;
+
+
+// Чем выше speed, тем меньше интервал между ходами.
+//
+// speed 1  -> 165 ms
+// speed 5  -> 105 ms
+// speed 10 -> 30 ms
+
+function getTickInterval() {
+    return 180 - speed * 15;
+}
+
+
+function setSpeed(value) {
+
+    speed = Number(value);
+
+    document.getElementById("speedValue").textContent = speed;
+}
+
+
+// ============================================================
+// DIRECTIONS
+// ============================================================
+
+const DIR = {
+
+    UP: {
+        x: 0,
+        y: -1
+    },
+
+    DOWN: {
+        x: 0,
+        y: 1
+    },
+
+    LEFT: {
+        x: -1,
+        y: 0
+    },
+
+    RIGHT: {
+        x: 1,
+        y: 0
+    }
+
+};
+
+
+function opposite(a, b) {
+
+    return (
+        a.x === -b.x &&
+        a.y === -b.y
+    );
+}
+
+
+// ============================================================
+// CREATE SNAKE
+// ============================================================
+
+function createSnake(
+    x,
+    y,
+    direction,
+    color
+) {
+
+    return {
+
+        body: [
+
+            {
+                x: x,
+                y: y
+            },
+
+            {
+                x: x - direction.x,
+                y: y - direction.y
+            },
+
+            {
+                x: x - direction.x * 2,
+                y: y - direction.y * 2
+            },
+
+            {
+                x: x - direction.x * 3,
+                y: y - direction.y * 3
+            }
+
+        ],
+
+        direction: {
+            ...direction
+        },
+
+        nextDirection: {
+            ...direction
+        },
+
+        color: color,
+
+        alive: true,
+
+        score: 0
+    };
+}
+
+
+// ============================================================
+// GAME INIT
+// ============================================================
+
+function restart() {
+
+    gameOver = false;
+
+    score1 = 0;
+    score2 = 0;
+    foodCount = 0;
+
+    snake1 = createSnake(
+        10,
+        Math.floor(ROWS / 2),
+        DIR.RIGHT,
+        "#42e878"
+    );
+
+    snake2 = createSnake(
+        COLS - 11,
+        Math.floor(ROWS / 2),
+        DIR.LEFT,
+        "#4da6ff"
+    );
+
+    spawnFood();
+
+    document.getElementById("message").textContent = "";
+
+    updateScore();
+
+    lastTick = performance.now();
+}
+
+
+// ============================================================
+// GAME MODE
+// ============================================================
+
+function setMode(newMode) {
+
+    mode = newMode;
+
+    document.getElementById("player2Name").textContent =
+        mode === "bot"
+            ? "Бот"
+            : "Игрок 2";
+
+    restart();
+}
+
+
+// ============================================================
+// INPUT
+// ============================================================
+
+document.addEventListener("keydown", event => {
+
+    const key = event.key.toLowerCase();
+
+
+    // --------------------------------------------------------
+    // PLAYER 1
+    // --------------------------------------------------------
+
+    if (key === "w") {
+        changeDirection(
+            snake1,
+            DIR.UP
+        );
+    }
+
+    if (key === "s") {
+        changeDirection(
+            snake1,
+            DIR.DOWN
+        );
+    }
+
+    if (key === "a") {
+        changeDirection(
+            snake1,
+            DIR.LEFT
+        );
+    }
+
+    if (key === "d") {
+        changeDirection(
+            snake1,
+            DIR.RIGHT
+        );
+    }
+
+
+    // --------------------------------------------------------
+    // PLAYER 2
+    // --------------------------------------------------------
+
+    if (mode === "coop") {
+
+        if (event.key === "ArrowUp") {
+
+            changeDirection(
+                snake2,
+                DIR.UP
+            );
+        }
+
+        if (event.key === "ArrowDown") {
+
+            changeDirection(
+                snake2,
+                DIR.DOWN
+            );
+        }
+
+        if (event.key === "ArrowLeft") {
+
+            changeDirection(
+                snake2,
+                DIR.LEFT
+            );
+        }
+
+        if (event.key === "ArrowRight") {
+
+            changeDirection(
+                snake2,
+                DIR.RIGHT
+            );
+        }
+    }
+
+
+    // --------------------------------------------------------
+    // RESTART
+    // --------------------------------------------------------
+
+    if (key === "r") {
+        restart();
+    }
+
+});
+
+
+function changeDirection(
+    snake,
+    direction
+) {
+
+    if (!snake.alive) {
+        return;
+    }
+
+    // Запрещаем мгновенный разворот
+    // на 180 градусов.
+
+    if (
+        !opposite(
+            snake.direction,
+            direction
+        )
+    ) {
+
+        snake.nextDirection = {
+            ...direction
+        };
+    }
+}
+
+
+// ============================================================
+// FOOD
+// ============================================================
+
+function spawnFood() {
+
+    let position;
+
+    do {
+
+        position = {
+
+            x: Math.floor(
+                Math.random() * COLS
+            ),
+
+            y: Math.floor(
+                Math.random() * ROWS
+            )
+
+        };
+
+    } while (
+
+        isOccupied(
+            position,
+            snake1
+        )
+
+        ||
+
+        isOccupied(
+            position,
+            snake2
+        )
+
+    );
+
+    food = position;
+}
+
+
+function isOccupied(
+    position,
+    snake
+) {
+
+    if (!snake) {
+        return false;
+    }
+
+    return snake.body.some(
+        part =>
+            part.x === position.x &&
+            part.y === position.y
+    );
+}
+
+
+// ============================================================
+// BOT AI
+// ============================================================
+
+function botThink() {
+
+    if (!snake2.alive) {
+        return;
+    }
+
+    const head = snake2.body[0];
+
+
+    const possibleDirections = [
+
+        DIR.UP,
+        DIR.DOWN,
+        DIR.LEFT,
+        DIR.RIGHT
+
+    ];
+
+
+    // Нельзя разворачиваться на 180 градусов.
+
+    const directions =
+        possibleDirections.filter(
+            direction =>
+                !opposite(
+                    snake2.direction,
+                    direction
+                )
+        );
+
+
+    let bestDirection =
+        snake2.direction;
+
+    let bestScore = -Infinity;
+
+
+    for (const direction of directions) {
+
+        const next = {
+
+            x: head.x + direction.x,
+            y: head.y + direction.y
+
+        };
+
+
+        // ----------------------------------------------------
+        // WALL
+        // ----------------------------------------------------
+
+        if (
+
+            next.x < 0 ||
+            next.x >= COLS ||
+            next.y < 0 ||
+            next.y >= ROWS
+
+        ) {
+
+            continue;
+        }
+
+
+        // ----------------------------------------------------
+        // COLLISION
+        // ----------------------------------------------------
+
+        if (
+            dangerous(next)
+        ) {
+
+            continue;
+        }
+
+
+        // ----------------------------------------------------
+        // DISTANCE TO FOOD
+        // ----------------------------------------------------
+
+        const distanceToFood =
+
+            Math.abs(
+                next.x - food.x
+            )
+
+            +
+
+            Math.abs(
+                next.y - food.y
+            );
+
+
+        let value =
+            -distanceToFood;
+
+
+        // ----------------------------------------------------
+        // APPROACH PLAYER
+        // ----------------------------------------------------
+
+        const distanceToPlayer =
+
+            Math.abs(
+                next.x -
+                snake1.body[0].x
+            )
+
+            +
+
+            Math.abs(
+                next.y -
+                snake1.body[0].y
+            );
+
+
+        if (
+            distanceToPlayer < 6
+        ) {
+
+            value += 2;
+        }
+
+
+        // ----------------------------------------------------
+        // RANDOMNESS
+        // ----------------------------------------------------
+
+        value += Math.random() * 0.8;
+
+
+        if (
+            value > bestScore
+        ) {
+
+            bestScore = value;
+
+            bestDirection =
+                direction;
+        }
+
+    }
+
+
+    snake2.nextDirection = {
+        ...bestDirection
+    };
+}
+
+
+function dangerous(position) {
+
+    // Own body
+
+    for (
+        const part of snake2.body
+    ) {
+
+        if (
+
+            part.x === position.x &&
+            part.y === position.y
+
+        ) {
+
+            return true;
+        }
+    }
+
+
+    // Player body
+
+    for (
+        const part of snake1.body
+    ) {
+
+        if (
+
+            part.x === position.x &&
+            part.y === position.y
+
+        ) {
+
+            return true;
+        }
+    }
+
+
+    return false;
+}
+
+
+// ============================================================
+// UPDATE
+// ============================================================
+
+function update() {
+
+    if (gameOver) {
+        return;
+    }
+
+
+    // Bot chooses direction
+    // before movement.
+
+    if (mode === "bot") {
+
+        botThink();
+    }
+
+
+    snake1.direction =
+        {
+            ...snake1.nextDirection
+        };
+
+
+    snake2.direction =
+        {
+            ...snake2.nextDirection
+        };
+
+
+    const next1 =
+        getNextHead(snake1);
+
+    const next2 =
+        getNextHead(snake2);
+
+
+    // --------------------------------------------------------
+    // COLLISIONS
+    // --------------------------------------------------------
+
+    checkCollision(
+        snake1,
+        next1,
+        snake2,
+        next2
+    );
+
+    checkCollision(
+        snake2,
+        next2,
+        snake1,
+        next1
+    );
+
+
+    // --------------------------------------------------------
+    // MOVEMENT
+    // --------------------------------------------------------
+
+    moveSnake(
+        snake1,
+        next1
+    );
+
+    moveSnake(
+        snake2,
+        next2
+    );
+
+
+    // --------------------------------------------------------
+    // FOOD
+    // --------------------------------------------------------
+
+    let ate1 = false;
+    let ate2 = false;
+
+
+    if (
+
+        snake1.alive &&
+
+        next1.x === food.x &&
+        next1.y === food.y
+
+    ) {
+
+        ate1 = true;
+    }
+
+
+    if (
+
+        snake2.alive &&
+
+        next2.x === food.x &&
+        next2.y === food.y
+
+    ) {
+
+        ate2 = true;
+    }
+
+
+    // --------------------------------------------------------
+    // GROW PLAYER 1
+    // --------------------------------------------------------
+
+    if (ate1) {
+
+        snake1.score++;
+
+        score1++;
+
+        foodCount++;
+
+        snake1.body.push({
+
+            ...snake1.body[
+                snake1.body.length - 1
+            ]
+
+        });
+    }
+
+
+    // --------------------------------------------------------
+    // GROW PLAYER 2
+    // --------------------------------------------------------
+
+    if (ate2) {
+
+        snake2.score++;
+
+        score2++;
+
+        foodCount++;
+
+        snake2.body.push({
+
+            ...snake2.body[
+                snake2.body.length - 1
+            ]
+
+        });
+    }
+
+
+    if (
+        ate1 ||
+        ate2
+    ) {
+
+        spawnFood();
+    }
+
+
+    updateScore();
+
+    checkWinner();
+}
+
+
+// ============================================================
+// MOVEMENT
+// ============================================================
+
+function getNextHead(snake) {
+
+    const head =
+        snake.body[0];
+
+    return {
+
+        x:
+            head.x +
+            snake.direction.x,
+
+        y:
+            head.y +
+            snake.direction.y
+
+    };
+}
+
+
+function moveSnake(
+    snake,
+    nextHead
+) {
+
+    if (!snake.alive) {
+        return;
+    }
+
+    snake.body.unshift(
+        nextHead
+    );
+
+    snake.body.pop();
+}
+
+
+// ============================================================
+// COLLISION
+// ============================================================
+
+function checkCollision(
+    snake,
+    next,
+    enemy,
+    enemyNext
+) {
+
+    if (!snake.alive) {
+        return true;
+    }
+
+
+    // --------------------------------------------------------
+    // WALL
+    // --------------------------------------------------------
+
+    if (
+
+        next.x < 0 ||
+        next.x >= COLS ||
+        next.y < 0 ||
+        next.y >= ROWS
+
+    ) {
+
+        snake.alive = false;
+
+        return true;
+    }
+
+
+    // --------------------------------------------------------
+    // OWN BODY
+    // --------------------------------------------------------
+
+    for (
+        const part of snake.body
+    ) {
+
+        if (
+
+            part.x === next.x &&
+            part.y === next.y
+
+        ) {
+
+            snake.alive = false;
+
+            return true;
+        }
+    }
+
+
+    // --------------------------------------------------------
+    // ENEMY BODY
+    // --------------------------------------------------------
+
+    for (
+        const part of enemy.body
+    ) {
+
+        if (
+
+            part.x === next.x &&
+            part.y === next.y
+
+        ) {
+
+            snake.alive = false;
+
+            return true;
+        }
+    }
+
+
+    // --------------------------------------------------------
+    // HEAD TO HEAD
+    // --------------------------------------------------------
+
+    if (
+
+        next.x === enemyNext.x &&
+        next.y === enemyNext.y
+
+    ) {
+
+        if (
+            snake.body.length >
+            enemy.body.length
+        ) {
+
+            enemy.alive = false;
+
+        }
+        else if (
+            snake.body.length <
+            enemy.body.length
+        ) {
+
+            snake.alive = false;
+
+        }
+        else {
+
+            snake.alive = false;
+
+            enemy.alive = false;
+        }
+
+
+        return !snake.alive;
+    }
+
+
+    return false;
+}
+
+
+// ============================================================
+// WINNER
+// ============================================================
+
+function checkWinner() {
+
+    // Both dead
+
+    if (
+
+        !snake1.alive &&
+        !snake2.alive
+
+    ) {
+
+        gameOver = true;
+
+        document.getElementById(
+            "message"
+        ).textContent =
+            "💥 НИЧЬЯ";
+
+        return;
+    }
+
+
+    // Player 1 dead
+
+    if (!snake1.alive) {
+
+        gameOver = true;
+
+        document.getElementById(
+            "message"
+        ).textContent =
+
+            mode === "bot"
+
+                ? "🔵 БОТ ПОБЕДИЛ"
+
+                : "🔵 ИГРОК 2 ПОБЕДИЛ";
+
+        return;
+    }
+
+
+    // Player 2 dead
+
+    if (!snake2.alive) {
+
+        gameOver = true;
+
+        document.getElementById(
+            "message"
+        ).textContent =
+            "🟢 ИГРОК 1 ПОБЕДИЛ";
+
+        return;
+    }
+}
+
+
+// ============================================================
+// SCORE
+// ============================================================
+
+function updateScore() {
+
+    document.getElementById(
+        "score1"
+    ).textContent = score1;
+
+
+    document.getElementById(
+        "score2"
+    ).textContent = score2;
+
+
+    document.getElementById(
+        "foodCount"
+    ).textContent = foodCount;
+}
+
+
+// ============================================================
+// DRAW
+// ============================================================
+
+function draw() {
+
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    drawGrid();
+
+    drawFood();
+
+    drawSnake(snake1);
+
+    drawSnake(snake2);
+}
+
+
+// ============================================================
+// GRID
+// ============================================================
+
+function drawGrid() {
+
+    ctx.strokeStyle = "#151515";
+
+    ctx.lineWidth = 1;
+
+
+    for (
+        let x = 0;
+        x <= canvas.width;
+        x += CELL
+    ) {
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            x,
+            0
+        );
+
+        ctx.lineTo(
+            x,
+            canvas.height
+        );
+
+        ctx.stroke();
+    }
+
+
+    for (
+        let y = 0;
+        y <= canvas.height;
+        y += CELL
+    ) {
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            0,
+            y
+        );
+
+        ctx.lineTo(
+            canvas.width,
+            y
+        );
+
+        ctx.stroke();
+    }
+}
+
+
+// ============================================================
+// DRAW FOOD
+// ============================================================
+
+function drawFood() {
+
+    const cx =
+        food.x * CELL +
+        CELL / 2;
+
+    const cy =
+        food.y * CELL +
+        CELL / 2;
+
+
+    ctx.fillStyle =
+        "#ff4040";
+
+
+    ctx.beginPath();
+
+    ctx.arc(
+
+        cx,
+        cy,
+
+        CELL * 0.32,
+
+        0,
+        Math.PI * 2
+
+    );
+
+    ctx.fill();
+}
+
+
+// ============================================================
+// DRAW SNAKE
+// ============================================================
+
+function drawSnake(snake) {
+
+    for (
+        let i = snake.body.length - 1;
+        i >= 0;
+        i--
+    ) {
+
+        const part =
+            snake.body[i];
+
+
+        const x =
+            part.x * CELL;
+
+        const y =
+            part.y * CELL;
+
+
+        ctx.globalAlpha =
+            snake.alive
+                ? 1
+                : 0.25;
+
+
+        ctx.fillStyle =
+            snake.color;
+
+
+        ctx.fillRect(
+
+            x + 1,
+            y + 1,
+
+            CELL - 2,
+            CELL - 2
+
+        );
+
+
+        // ----------------------------------------------------
+        // HEAD
+        // ----------------------------------------------------
+
+        if (
+            i === 0 &&
+            snake.alive
+        ) {
+
+            ctx.fillStyle =
+                "#fff";
+
+
+            const eyeSize = 3;
+
+
+            let ex1;
+            let ey1;
+
+            let ex2;
+            let ey2;
+
+
+            if (
+                snake.direction.x !== 0
+            ) {
+
+                ex1 =
+                    snake.direction.x > 0
+                        ? x + CELL - 7
+                        : x + 4;
+
+                ex2 = ex1;
+
+                ey1 =
+                    y + 5;
+
+                ey2 =
+                    y + CELL - 7;
+
+            }
+            else {
+
+                ey1 =
+                    snake.direction.y > 0
+                        ? y + CELL - 7
+                        : y + 4;
+
+                ey2 = ey1;
+
+                ex1 =
+                    x + 5;
+
+                ex2 =
+                    x + CELL - 8;
+            }
+
+
+            ctx.fillRect(
+
+                ex1,
+                ey1,
+
+                eyeSize,
+                eyeSize
+
+            );
+
+
+            ctx.fillRect(
+
+                ex2,
+                ey2,
+
+                eyeSize,
+                eyeSize
+
+            );
+        }
+    }
+
+
+    ctx.globalAlpha = 1;
+}
+
+
+// ============================================================
+// MAIN LOOP
+// ============================================================
+
+function loop(timestamp) {
+
+    if (
+        timestamp - lastTick >=
+        getTickInterval()
+    ) {
+
+        update();
+
+        lastTick =
+            timestamp;
+    }
+
+
+    draw();
+
+    requestAnimationFrame(
+        loop
+    );
+}
+
+
+// ============================================================
+// START
+// ============================================================
+
+restart();
+
+requestAnimationFrame(
+    loop
+);
+
+</script>
+
+</body>
+</html>
