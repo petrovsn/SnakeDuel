@@ -1,0 +1,15 @@
+[Unit]
+Description=SnakesDuel
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/root/python_envs/venv/bin/python3 -m http.server 3555
+Restart=always
+RestartSec=5
+User=root
+WorkingDirectory=/root/Games/SnakeDuel
+Environment=KEY=value
+
+[Install]
+WantedBy=multi-user.target

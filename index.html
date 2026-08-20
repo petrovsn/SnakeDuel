@@ -2,126 +2,525 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
 <title>Snake Duel</title>
 
 <style>
-    * {
-        box-sizing: border-box;
-    }
 
-    body {
-        margin: 0;
-        background: #111;
-        color: #eee;
-        font-family: Arial, sans-serif;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-    }
+* {
+    box-sizing: border-box;
+}
 
-    .game {
-        text-align: center;
-    }
+html,
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
 
-    h1 {
-        margin: 0 0 10px;
-        letter-spacing: 4px;
-    }
+    background: #111;
+    color: #eee;
 
-    .controls {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-bottom: 12px;
-    }
+    font-family: Arial, sans-serif;
 
-    button {
-        background: #222;
-        color: #eee;
-        border: 1px solid #555;
-        padding: 8px 16px;
-        cursor: pointer;
-        font-size: 14px;
-    }
+    overflow: hidden;
 
-    button:hover {
-        background: #333;
-    }
+    touch-action: none;
+}
 
-    .speed-control {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        background: #1a1a1a;
-        border: 1px solid #333;
-        padding: 6px 10px;
-    }
 
-    #speedSlider {
-        width: 150px;
-        cursor: pointer;
-    }
+/* ============================================================
+   DESKTOP
+   ============================================================ */
 
-    #speedValue {
-        display: inline-block;
-        width: 20px;
-        font-weight: bold;
-    }
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 
-    canvas {
-        background: #080808;
-        border: 2px solid #444;
+.game {
+    text-align: center;
+    width: 100%;
+}
+
+h1 {
+    margin: 0 0 10px;
+    letter-spacing: 4px;
+}
+
+
+.controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+
+    gap: 10px;
+
+    margin-bottom: 12px;
+}
+
+button {
+    background: #222;
+    color: #eee;
+
+    border: 1px solid #555;
+
+    padding: 8px 16px;
+
+    cursor: pointer;
+
+    font-size: 14px;
+}
+
+button:hover {
+    background: #333;
+}
+
+
+.speed-control {
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    background: #1a1a1a;
+
+    border: 1px solid #333;
+
+    padding: 6px 10px;
+}
+
+#speedSlider {
+    width: 150px;
+}
+
+
+#speedValue {
+    display: inline-block;
+
+    width: 20px;
+
+    font-weight: bold;
+}
+
+
+/* ============================================================
+   SCORE
+   ============================================================ */
+
+.info {
+    display: flex;
+
+    justify-content: space-between;
+
+    width: 800px;
+    max-width: 95vw;
+
+    margin: 10px auto;
+
+    font-size: 18px;
+}
+
+.p1 {
+    color: #42e878;
+}
+
+.p2 {
+    color: #4da6ff;
+}
+
+.food {
+    color: #ff5050;
+}
+
+
+/* ============================================================
+   GAME FIELD
+   ============================================================ */
+
+.canvas-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+canvas {
+    background: #080808;
+
+    border: 2px solid #444;
+
+    display: block;
+
+    image-rendering: pixelated;
+}
+
+
+/* ============================================================
+   MESSAGE
+   ============================================================ */
+
+#message {
+    height: 30px;
+
+    margin-top: 8px;
+
+    font-size: 20px;
+
+    font-weight: bold;
+}
+
+
+.help {
+    color: #888;
+
+    font-size: 13px;
+
+    line-height: 1.6;
+
+    margin-top: 10px;
+}
+
+
+/* ============================================================
+   MOBILE MODE
+   ============================================================ */
+
+.mobile-mode {
+    display: none;
+}
+
+
+/*
+   На телефоне скрываем клавиатурную подсказку.
+*/
+
+body.phone .help {
+    display: none;
+}
+
+
+/*
+   Телефонная панель управления.
+*/
+
+.phone-controls {
+    position: fixed;
+
+    z-index: 100;
+
+    display: none;
+
+    user-select: none;
+}
+
+
+/* ------------------------------------------------------------
+   Кнопки
+   ------------------------------------------------------------ */
+
+.phone-btn {
+    width: 64px;
+    height: 64px;
+
+    border-radius: 14px;
+
+    border: 2px solid #555;
+
+    background: rgba(40, 40, 40, 0.9);
+
+    color: white;
+
+    font-size: 30px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    -webkit-tap-highlight-color: transparent;
+}
+
+.phone-btn:active {
+    background: #555;
+
+    transform: scale(0.92);
+}
+
+
+/* ------------------------------------------------------------
+   D-PAD
+   ------------------------------------------------------------ */
+
+.dpad {
+    display: grid;
+
+    grid-template-columns:
+        64px 64px 64px;
+
+    grid-template-rows:
+        64px 64px 64px;
+
+    gap: 5px;
+}
+
+
+.dpad-up {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.dpad-left {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.dpad-down {
+    grid-column: 2;
+    grid-row: 3;
+}
+
+.dpad-right {
+    grid-column: 3;
+    grid-row: 2;
+}
+
+
+/* ============================================================
+   PHONE BUTTON POSITIONING
+   ============================================================ */
+
+
+/*
+   Вертикальный телефон:
+
+   игровое поле сверху,
+   управление снизу.
+*/
+
+@media (max-width: 700px) and (orientation: portrait) {
+
+    body.phone {
         display: block;
-        margin: auto;
-        image-rendering: pixelated;
     }
 
-    .info {
+    body.phone .game {
+        width: 100%;
+        height: 100%;
+
         display: flex;
-        justify-content: space-between;
-        width: 800px;
-        max-width: 95vw;
-        margin: 10px auto;
-        font-size: 18px;
+        flex-direction: column;
+
+        align-items: center;
     }
 
-    .p1 {
-        color: #42e878;
-    }
-
-    .p2 {
-        color: #4da6ff;
-    }
-
-    .food {
-        color: #ff5050;
-    }
-
-    #message {
-        height: 30px;
-        margin-top: 8px;
+    body.phone h1 {
         font-size: 20px;
-        font-weight: bold;
+
+        margin: 4px 0;
     }
 
-    .help {
-        color: #888;
-        font-size: 13px;
-        line-height: 1.6;
-        margin-top: 10px;
+    body.phone .controls {
+        margin: 2px 0;
     }
+
+    body.phone .controls button {
+        padding: 5px 9px;
+
+        font-size: 11px;
+    }
+
+    body.phone .speed-control {
+        padding: 3px 6px;
+
+        font-size: 11px;
+    }
+
+    body.phone #speedSlider {
+        width: 90px;
+    }
+
+    body.phone .info {
+        width: 96%;
+
+        font-size: 13px;
+
+        margin: 3px auto;
+    }
+
+    body.phone .canvas-wrapper {
+        width: 100%;
+
+        flex: 1;
+
+        min-height: 0;
+    }
+
+    body.phone canvas {
+        max-width: 96vw;
+        max-height: 55vh;
+
+        width: auto;
+        height: auto;
+    }
+
+    body.phone #message {
+        height: 24px;
+
+        font-size: 16px;
+
+        margin: 2px;
+    }
+
+    body.phone .phone-controls {
+        display: block;
+
+        position: fixed;
+
+        bottom: 10px;
+        left: 50%;
+
+        transform: translateX(-50%);
+    }
+}
+
+
+/*
+   Горизонтальный телефон:
+
+   поле слева,
+   управление справа.
+*/
+
+@media (max-width: 1000px) and (orientation: landscape) {
+
+    body.phone {
+        display: block;
+    }
+
+    body.phone .game {
+        width: 100%;
+        height: 100%;
+
+        display: flex;
+
+        flex-direction: column;
+
+        align-items: center;
+    }
+
+    body.phone h1 {
+        display: none;
+    }
+
+    body.phone .controls {
+        position: absolute;
+
+        top: 5px;
+        left: 5px;
+
+        z-index: 20;
+
+        margin: 0;
+    }
+
+    body.phone .controls button {
+        padding: 5px 8px;
+
+        font-size: 10px;
+    }
+
+    body.phone .speed-control {
+        padding: 3px 6px;
+
+        font-size: 10px;
+    }
+
+    body.phone #speedSlider {
+        width: 80px;
+    }
+
+    body.phone .info {
+        position: absolute;
+
+        top: 5px;
+        left: 50%;
+
+        transform: translateX(-50%);
+
+        width: 50%;
+
+        z-index: 20;
+
+        margin: 0;
+
+        font-size: 13px;
+    }
+
+    body.phone .canvas-wrapper {
+        width: 100%;
+        height: 100%;
+
+        display: flex;
+
+        justify-content: flex-start;
+        align-items: center;
+
+        padding-right: 145px;
+    }
+
+    body.phone canvas {
+        max-width: calc(100vw - 160px);
+        max-height: 96vh;
+
+        width: auto;
+        height: auto;
+    }
+
+    body.phone #message {
+        position: absolute;
+
+        top: 35px;
+        left: 50%;
+
+        transform: translateX(-50%);
+
+        z-index: 20;
+
+        font-size: 16px;
+    }
+
+    body.phone .phone-controls {
+        display: block;
+
+        position: fixed;
+
+        right: 10px;
+        top: 50%;
+
+        transform: translateY(-50%);
+    }
+}
+
 </style>
 </head>
+
 
 <body>
 
 <div class="game">
 
     <h1>SNAKE DUEL</h1>
+
+
+    <!-- =====================================================
+         GAME CONTROLS
+         ===================================================== -->
 
     <div class="controls">
 
@@ -133,11 +532,17 @@
             ПРОТИВ БОТА
         </button>
 
+        <button onclick="setMode('phone')">
+            ТЕЛЕФОН
+        </button>
+
         <button onclick="restart()">
             RESTART
         </button>
 
+
         <div class="speed-control">
+
             <span>Скорость:</span>
 
             <input
@@ -149,44 +554,128 @@
                 oninput="setSpeed(this.value)"
             >
 
-            <span id="speedValue">5</span>
+            <span id="speedValue">
+                5
+            </span>
+
         </div>
 
     </div>
 
+
+    <!-- =====================================================
+         SCORE
+         ===================================================== -->
+
     <div class="info">
 
         <span class="p1">
+
             🟢 Игрок 1:
-            <span id="score1">0</span>
+
+            <span id="score1">
+                0
+            </span>
+
         </span>
+
 
         <span class="food">
+
             Еда:
-            <span id="foodCount">0</span>
+
+            <span id="foodCount">
+                0
+            </span>
+
         </span>
 
+
         <span class="p2">
+
             🔵
-            <span id="player2Name">Игрок 2</span>:
-            <span id="score2">0</span>
+
+            <span id="player2Name">
+                Игрок 2
+            </span>:
+
+            <span id="score2">
+                0
+            </span>
+
         </span>
 
     </div>
 
-    <canvas
-        id="game"
-        width="800"
-        height="600">
-    </canvas>
+
+    <!-- =====================================================
+         CANVAS
+         ===================================================== -->
+
+    <div class="canvas-wrapper">
+
+        <canvas
+            id="game"
+            width="800"
+            height="600">
+        </canvas>
+
+    </div>
+
 
     <div id="message"></div>
 
+
     <div class="help">
+
         Игрок 1: WASD<br>
+
         Игрок 2: стрелки<br>
-        В режиме против бота синим управляет компьютер.<br>
+
         R — перезапуск игры.
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     PHONE CONTROLS
+     ========================================================= -->
+
+<div
+    id="phoneControls"
+    class="phone-controls">
+
+    <div class="dpad">
+
+        <button
+            class="phone-btn dpad-up"
+            data-direction="up">
+            ▲
+        </button>
+
+
+        <button
+            class="phone-btn dpad-left"
+            data-direction="left">
+            ◀
+        </button>
+
+
+        <button
+            class="phone-btn dpad-down"
+            data-direction="down">
+            ▼
+        </button>
+
+
+        <button
+            class="phone-btn dpad-right"
+            data-direction="right">
+            ▶
+        </button>
+
     </div>
 
 </div>
@@ -198,13 +687,20 @@
 // CONFIGURATION
 // ============================================================
 
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
+const canvas =
+    document.getElementById("game");
+
+const ctx =
+    canvas.getContext("2d");
+
 
 const CELL = 20;
 
-const COLS = canvas.width / CELL;
-const ROWS = canvas.height / CELL;
+const COLS =
+    canvas.width / CELL;
+
+const ROWS =
+    canvas.height / CELL;
 
 
 // ============================================================
@@ -216,12 +712,15 @@ let mode = "coop";
 let gameOver = false;
 
 let snake1;
+
 let snake2;
 
 let food;
 
 let score1 = 0;
+
 let score2 = 0;
+
 let foodCount = 0;
 
 let lastTick = 0;
@@ -231,19 +730,17 @@ let lastTick = 0;
 // SPEED
 // ============================================================
 
-// 1 = slow
-// 10 = fast
-
 let speed = 5;
 
 
-// Чем выше speed, тем меньше интервал между ходами.
-//
-// speed 1  -> 165 ms
-// speed 5  -> 105 ms
-// speed 10 -> 30 ms
-
 function getTickInterval() {
+
+    /*
+       1  -> 165 ms
+       5  -> 105 ms
+       10 -> 30 ms
+    */
+
     return 180 - speed * 15;
 }
 
@@ -252,7 +749,9 @@ function setSpeed(value) {
 
     speed = Number(value);
 
-    document.getElementById("speedValue").textContent = speed;
+    document.getElementById(
+        "speedValue"
+    ).textContent = speed;
 }
 
 
@@ -288,8 +787,11 @@ const DIR = {
 function opposite(a, b) {
 
     return (
+
         a.x === -b.x &&
+
         a.y === -b.y
+
     );
 }
 
@@ -315,18 +817,27 @@ function createSnake(
             },
 
             {
-                x: x - direction.x,
-                y: y - direction.y
+                x:
+                    x - direction.x,
+
+                y:
+                    y - direction.y
             },
 
             {
-                x: x - direction.x * 2,
-                y: y - direction.y * 2
+                x:
+                    x - direction.x * 2,
+
+                y:
+                    y - direction.y * 2
             },
 
             {
-                x: x - direction.x * 3,
-                y: y - direction.y * 3
+                x:
+                    x - direction.x * 3,
+
+                y:
+                    y - direction.y * 3
             }
 
         ],
@@ -349,7 +860,7 @@ function createSnake(
 
 
 // ============================================================
-// GAME INIT
+// RESTART
 // ============================================================
 
 function restart() {
@@ -357,142 +868,221 @@ function restart() {
     gameOver = false;
 
     score1 = 0;
+
     score2 = 0;
+
     foodCount = 0;
 
+
     snake1 = createSnake(
+
         10,
-        Math.floor(ROWS / 2),
+
+        Math.floor(
+            ROWS / 2
+        ),
+
         DIR.RIGHT,
+
         "#42e878"
+
     );
 
+
     snake2 = createSnake(
+
         COLS - 11,
-        Math.floor(ROWS / 2),
+
+        Math.floor(
+            ROWS / 2
+        ),
+
         DIR.LEFT,
+
         "#4da6ff"
+
     );
+
 
     spawnFood();
 
-    document.getElementById("message").textContent = "";
+
+    document.getElementById(
+        "message"
+    ).textContent = "";
+
 
     updateScore();
 
-    lastTick = performance.now();
+
+    lastTick =
+        performance.now();
 }
 
 
 // ============================================================
-// GAME MODE
+// MODE
 // ============================================================
 
 function setMode(newMode) {
 
     mode = newMode;
 
-    document.getElementById("player2Name").textContent =
-        mode === "bot"
-            ? "Бот"
-            : "Игрок 2";
+
+    if (mode === "bot") {
+
+        document.getElementById(
+            "player2Name"
+        ).textContent = "Бот";
+
+        document.body.classList.remove(
+            "phone"
+        );
+
+    }
+
+
+    else if (mode === "phone") {
+
+        document.getElementById(
+            "player2Name"
+        ).textContent = "Бот";
+
+        document.body.classList.add(
+            "phone"
+        );
+
+    }
+
+
+    else {
+
+        document.getElementById(
+            "player2Name"
+        ).textContent = "Игрок 2";
+
+        document.body.classList.remove(
+            "phone"
+        );
+    }
+
 
     restart();
 }
 
 
 // ============================================================
-// INPUT
+// KEYBOARD INPUT
 // ============================================================
 
-document.addEventListener("keydown", event => {
+document.addEventListener(
+    "keydown",
+    event => {
 
-    const key = event.key.toLowerCase();
-
-
-    // --------------------------------------------------------
-    // PLAYER 1
-    // --------------------------------------------------------
-
-    if (key === "w") {
-        changeDirection(
-            snake1,
-            DIR.UP
-        );
-    }
-
-    if (key === "s") {
-        changeDirection(
-            snake1,
-            DIR.DOWN
-        );
-    }
-
-    if (key === "a") {
-        changeDirection(
-            snake1,
-            DIR.LEFT
-        );
-    }
-
-    if (key === "d") {
-        changeDirection(
-            snake1,
-            DIR.RIGHT
-        );
-    }
+        const key =
+            event.key.toLowerCase();
 
 
-    // --------------------------------------------------------
-    // PLAYER 2
-    // --------------------------------------------------------
+        // ----------------------------------------------------
+        // PLAYER 1
+        // ----------------------------------------------------
 
-    if (mode === "coop") {
-
-        if (event.key === "ArrowUp") {
+        if (key === "w") {
 
             changeDirection(
-                snake2,
+                snake1,
                 DIR.UP
             );
         }
 
-        if (event.key === "ArrowDown") {
+        if (key === "s") {
 
             changeDirection(
-                snake2,
+                snake1,
                 DIR.DOWN
             );
         }
 
-        if (event.key === "ArrowLeft") {
+        if (key === "a") {
 
             changeDirection(
-                snake2,
+                snake1,
                 DIR.LEFT
             );
         }
 
-        if (event.key === "ArrowRight") {
+        if (key === "d") {
 
             changeDirection(
-                snake2,
+                snake1,
                 DIR.RIGHT
             );
         }
+
+
+        // ----------------------------------------------------
+        // PLAYER 2
+        // ----------------------------------------------------
+
+        if (mode === "coop") {
+
+            if (
+                event.key === "ArrowUp"
+            ) {
+
+                changeDirection(
+                    snake2,
+                    DIR.UP
+                );
+            }
+
+
+            if (
+                event.key === "ArrowDown"
+            ) {
+
+                changeDirection(
+                    snake2,
+                    DIR.DOWN
+                );
+            }
+
+
+            if (
+                event.key === "ArrowLeft"
+            ) {
+
+                changeDirection(
+                    snake2,
+                    DIR.LEFT
+                );
+            }
+
+
+            if (
+                event.key === "ArrowRight"
+            ) {
+
+                changeDirection(
+                    snake2,
+                    DIR.RIGHT
+                );
+            }
+        }
+
+
+        if (key === "r") {
+
+            restart();
+        }
+
     }
+);
 
 
-    // --------------------------------------------------------
-    // RESTART
-    // --------------------------------------------------------
-
-    if (key === "r") {
-        restart();
-    }
-
-});
-
+// ============================================================
+// CHANGE DIRECTION
+// ============================================================
 
 function changeDirection(
     snake,
@@ -503,8 +1093,6 @@ function changeDirection(
         return;
     }
 
-    // Запрещаем мгновенный разворот
-    // на 180 градусов.
 
     if (
         !opposite(
@@ -521,6 +1109,94 @@ function changeDirection(
 
 
 // ============================================================
+// PHONE CONTROL
+// ============================================================
+
+function setupPhoneControls() {
+
+    const buttons =
+        document.querySelectorAll(
+            ".phone-btn"
+        );
+
+
+    buttons.forEach(button => {
+
+        const handlePress = event => {
+
+            event.preventDefault();
+
+
+            if (
+                mode !== "phone"
+            ) {
+                return;
+            }
+
+
+            const direction =
+                button.dataset.direction;
+
+
+            if (
+                direction === "up"
+            ) {
+
+                changeDirection(
+                    snake1,
+                    DIR.UP
+                );
+            }
+
+
+            if (
+                direction === "down"
+            ) {
+
+                changeDirection(
+                    snake1,
+                    DIR.DOWN
+                );
+            }
+
+
+            if (
+                direction === "left"
+            ) {
+
+                changeDirection(
+                    snake1,
+                    DIR.LEFT
+                );
+            }
+
+
+            if (
+                direction === "right"
+            ) {
+
+                changeDirection(
+                    snake1,
+                    DIR.RIGHT
+                );
+            }
+
+        };
+
+
+        button.addEventListener(
+            "pointerdown",
+            handlePress
+        );
+
+    });
+}
+
+
+setupPhoneControls();
+
+
+// ============================================================
 // FOOD
 // ============================================================
 
@@ -528,21 +1204,26 @@ function spawnFood() {
 
     let position;
 
+
     do {
 
         position = {
 
-            x: Math.floor(
-                Math.random() * COLS
-            ),
+            x:
+                Math.floor(
+                    Math.random() * COLS
+                ),
 
-            y: Math.floor(
-                Math.random() * ROWS
-            )
+            y:
+                Math.floor(
+                    Math.random() * ROWS
+                )
 
         };
 
-    } while (
+    }
+
+    while (
 
         isOccupied(
             position,
@@ -558,6 +1239,7 @@ function spawnFood() {
 
     );
 
+
     food = position;
 }
 
@@ -571,9 +1253,12 @@ function isOccupied(
         return false;
     }
 
+
     return snake.body.some(
         part =>
+
             part.x === position.x &&
+
             part.y === position.y
     );
 }
@@ -589,24 +1274,28 @@ function botThink() {
         return;
     }
 
-    const head = snake2.body[0];
+
+    const head =
+        snake2.body[0];
 
 
     const possibleDirections = [
 
         DIR.UP,
+
         DIR.DOWN,
+
         DIR.LEFT,
+
         DIR.RIGHT
 
     ];
 
 
-    // Нельзя разворачиваться на 180 градусов.
-
     const directions =
         possibleDirections.filter(
             direction =>
+
                 !opposite(
                     snake2.direction,
                     direction
@@ -617,28 +1306,37 @@ function botThink() {
     let bestDirection =
         snake2.direction;
 
-    let bestScore = -Infinity;
+    let bestScore =
+        -Infinity;
 
 
-    for (const direction of directions) {
+    for (
+        const direction of directions
+    ) {
 
         const next = {
 
-            x: head.x + direction.x,
-            y: head.y + direction.y
+            x:
+                head.x +
+                direction.x,
+
+            y:
+                head.y +
+                direction.y
 
         };
 
 
-        // ----------------------------------------------------
-        // WALL
-        // ----------------------------------------------------
+        // Wall
 
         if (
 
             next.x < 0 ||
+
             next.x >= COLS ||
+
             next.y < 0 ||
+
             next.y >= ROWS
 
         ) {
@@ -647,9 +1345,7 @@ function botThink() {
         }
 
 
-        // ----------------------------------------------------
-        // COLLISION
-        // ----------------------------------------------------
+        // Collision
 
         if (
             dangerous(next)
@@ -659,20 +1355,20 @@ function botThink() {
         }
 
 
-        // ----------------------------------------------------
-        // DISTANCE TO FOOD
-        // ----------------------------------------------------
+        // Food distance
 
         const distanceToFood =
 
             Math.abs(
-                next.x - food.x
+                next.x -
+                food.x
             )
 
             +
 
             Math.abs(
-                next.y - food.y
+                next.y -
+                food.y
             );
 
 
@@ -680,9 +1376,7 @@ function botThink() {
             -distanceToFood;
 
 
-        // ----------------------------------------------------
-        // APPROACH PLAYER
-        // ----------------------------------------------------
+        // Player proximity
 
         const distanceToPlayer =
 
@@ -707,18 +1401,18 @@ function botThink() {
         }
 
 
-        // ----------------------------------------------------
-        // RANDOMNESS
-        // ----------------------------------------------------
+        // Small randomness
 
-        value += Math.random() * 0.8;
+        value +=
+            Math.random() * 0.8;
 
 
         if (
             value > bestScore
         ) {
 
-            bestScore = value;
+            bestScore =
+                value;
 
             bestDirection =
                 direction;
@@ -744,6 +1438,7 @@ function dangerous(position) {
         if (
 
             part.x === position.x &&
+
             part.y === position.y
 
         ) {
@@ -762,6 +1457,7 @@ function dangerous(position) {
         if (
 
             part.x === position.x &&
+
             part.y === position.y
 
         ) {
@@ -786,29 +1482,35 @@ function update() {
     }
 
 
-    // Bot chooses direction
-    // before movement.
+    /*
+       В режиме телефона:
 
-    if (mode === "bot") {
+       Игрок 1 = человек
+       Игрок 2 = бот
+    */
+
+    if (
+        mode === "bot" ||
+        mode === "phone"
+    ) {
 
         botThink();
     }
 
 
-    snake1.direction =
-        {
-            ...snake1.nextDirection
-        };
+    snake1.direction = {
+        ...snake1.nextDirection
+    };
 
 
-    snake2.direction =
-        {
-            ...snake2.nextDirection
-        };
+    snake2.direction = {
+        ...snake2.nextDirection
+    };
 
 
     const next1 =
         getNextHead(snake1);
+
 
     const next2 =
         getNextHead(snake2);
@@ -825,6 +1527,7 @@ function update() {
         next2
     );
 
+
     checkCollision(
         snake2,
         next2,
@@ -834,13 +1537,14 @@ function update() {
 
 
     // --------------------------------------------------------
-    // MOVEMENT
+    // MOVE
     // --------------------------------------------------------
 
     moveSnake(
         snake1,
         next1
     );
+
 
     moveSnake(
         snake2,
@@ -853,6 +1557,7 @@ function update() {
     // --------------------------------------------------------
 
     let ate1 = false;
+
     let ate2 = false;
 
 
@@ -861,6 +1566,7 @@ function update() {
         snake1.alive &&
 
         next1.x === food.x &&
+
         next1.y === food.y
 
     ) {
@@ -874,6 +1580,7 @@ function update() {
         snake2.alive &&
 
         next2.x === food.x &&
+
         next2.y === food.y
 
     ) {
@@ -883,7 +1590,7 @@ function update() {
 
 
     // --------------------------------------------------------
-    // GROW PLAYER 1
+    // GROW 1
     // --------------------------------------------------------
 
     if (ate1) {
@@ -893,6 +1600,7 @@ function update() {
         score1++;
 
         foodCount++;
+
 
         snake1.body.push({
 
@@ -905,7 +1613,7 @@ function update() {
 
 
     // --------------------------------------------------------
-    // GROW PLAYER 2
+    // GROW 2
     // --------------------------------------------------------
 
     if (ate2) {
@@ -915,6 +1623,7 @@ function update() {
         score2++;
 
         foodCount++;
+
 
         snake2.body.push({
 
@@ -950,6 +1659,7 @@ function getNextHead(snake) {
     const head =
         snake.body[0];
 
+
     return {
 
         x:
@@ -973,9 +1683,11 @@ function moveSnake(
         return;
     }
 
+
     snake.body.unshift(
         nextHead
     );
+
 
     snake.body.pop();
 }
@@ -997,15 +1709,16 @@ function checkCollision(
     }
 
 
-    // --------------------------------------------------------
-    // WALL
-    // --------------------------------------------------------
+    // Wall
 
     if (
 
         next.x < 0 ||
+
         next.x >= COLS ||
+
         next.y < 0 ||
+
         next.y >= ROWS
 
     ) {
@@ -1016,9 +1729,7 @@ function checkCollision(
     }
 
 
-    // --------------------------------------------------------
-    // OWN BODY
-    // --------------------------------------------------------
+    // Own body
 
     for (
         const part of snake.body
@@ -1027,6 +1738,7 @@ function checkCollision(
         if (
 
             part.x === next.x &&
+
             part.y === next.y
 
         ) {
@@ -1038,9 +1750,7 @@ function checkCollision(
     }
 
 
-    // --------------------------------------------------------
-    // ENEMY BODY
-    // --------------------------------------------------------
+    // Enemy body
 
     for (
         const part of enemy.body
@@ -1049,6 +1759,7 @@ function checkCollision(
         if (
 
             part.x === next.x &&
+
             part.y === next.y
 
         ) {
@@ -1060,33 +1771,40 @@ function checkCollision(
     }
 
 
-    // --------------------------------------------------------
-    // HEAD TO HEAD
-    // --------------------------------------------------------
+    // Head-to-head
 
     if (
 
         next.x === enemyNext.x &&
+
         next.y === enemyNext.y
 
     ) {
 
         if (
+
             snake.body.length >
+
             enemy.body.length
+
         ) {
 
             enemy.alive = false;
 
         }
+
         else if (
+
             snake.body.length <
+
             enemy.body.length
+
         ) {
 
             snake.alive = false;
 
         }
+
         else {
 
             snake.alive = false;
@@ -1109,56 +1827,61 @@ function checkCollision(
 
 function checkWinner() {
 
-    // Both dead
-
     if (
 
         !snake1.alive &&
+
         !snake2.alive
 
     ) {
 
         gameOver = true;
 
+
         document.getElementById(
             "message"
         ).textContent =
             "💥 НИЧЬЯ";
 
+
         return;
     }
 
-
-    // Player 1 dead
 
     if (!snake1.alive) {
 
         gameOver = true;
 
+
         document.getElementById(
             "message"
         ).textContent =
 
-            mode === "bot"
+            mode === "phone"
 
                 ? "🔵 БОТ ПОБЕДИЛ"
 
-                : "🔵 ИГРОК 2 ПОБЕДИЛ";
+                : mode === "bot"
+
+                    ? "🔵 БОТ ПОБЕДИЛ"
+
+                    : "🔵 ИГРОК 2 ПОБЕДИЛ";
+
 
         return;
     }
 
 
-    // Player 2 dead
-
     if (!snake2.alive) {
 
         gameOver = true;
+
 
         document.getElementById(
             "message"
         ).textContent =
             "🟢 ИГРОК 1 ПОБЕДИЛ";
+
 
         return;
     }
@@ -1173,17 +1896,20 @@ function updateScore() {
 
     document.getElementById(
         "score1"
-    ).textContent = score1;
+    ).textContent =
+        score1;
 
 
     document.getElementById(
         "score2"
-    ).textContent = score2;
+    ).textContent =
+        score2;
 
 
     document.getElementById(
         "foodCount"
-    ).textContent = foodCount;
+    ).textContent =
+        foodCount;
 }
 
 
@@ -1194,10 +1920,13 @@ function updateScore() {
 function draw() {
 
     ctx.clearRect(
+
         0,
         0,
+
         canvas.width,
         canvas.height
+
     );
 
 
@@ -1217,15 +1946,20 @@ function draw() {
 
 function drawGrid() {
 
-    ctx.strokeStyle = "#151515";
+    ctx.strokeStyle =
+        "#151515";
 
     ctx.lineWidth = 1;
 
 
     for (
+
         let x = 0;
+
         x <= canvas.width;
+
         x += CELL
+
     ) {
 
         ctx.beginPath();
@@ -1245,9 +1979,13 @@ function drawGrid() {
 
 
     for (
+
         let y = 0;
+
         y <= canvas.height;
+
         y += CELL
+
     ) {
 
         ctx.beginPath();
@@ -1268,7 +2006,7 @@ function drawGrid() {
 
 
 // ============================================================
-// DRAW FOOD
+// FOOD
 // ============================================================
 
 function drawFood() {
@@ -1276,6 +2014,7 @@ function drawFood() {
     const cx =
         food.x * CELL +
         CELL / 2;
+
 
     const cy =
         food.y * CELL +
@@ -1287,6 +2026,7 @@ function drawFood() {
 
 
     ctx.beginPath();
+
 
     ctx.arc(
 
@@ -1300,20 +2040,26 @@ function drawFood() {
 
     );
 
+
     ctx.fill();
 }
 
 
 // ============================================================
-// DRAW SNAKE
+// SNAKE
 // ============================================================
 
 function drawSnake(snake) {
 
     for (
-        let i = snake.body.length - 1;
+
+        let i =
+            snake.body.length - 1;
+
         i >= 0;
+
         i--
+
     ) {
 
         const part =
@@ -1322,6 +2068,7 @@ function drawSnake(snake) {
 
         const x =
             part.x * CELL;
+
 
         const y =
             part.y * CELL;
@@ -1353,8 +2100,11 @@ function drawSnake(snake) {
         // ----------------------------------------------------
 
         if (
+
             i === 0 &&
+
             snake.alive
+
         ) {
 
             ctx.fillStyle =
@@ -1377,29 +2127,40 @@ function drawSnake(snake) {
 
                 ex1 =
                     snake.direction.x > 0
+
                         ? x + CELL - 7
+
                         : x + 4;
+
 
                 ex2 = ex1;
 
+
                 ey1 =
                     y + 5;
+
 
                 ey2 =
                     y + CELL - 7;
 
             }
+
             else {
 
                 ey1 =
                     snake.direction.y > 0
+
                         ? y + CELL - 7
+
                         : y + 4;
+
 
                 ey2 = ey1;
 
+
                 ex1 =
                     x + 5;
+
 
                 ex2 =
                     x + CELL - 8;
@@ -1427,6 +2188,7 @@ function drawSnake(snake) {
 
             );
         }
+
     }
 
 
@@ -1441,8 +2203,11 @@ function drawSnake(snake) {
 function loop(timestamp) {
 
     if (
+
         timestamp - lastTick >=
+
         getTickInterval()
+
     ) {
 
         update();
@@ -1453,6 +2218,7 @@ function loop(timestamp) {
 
 
     draw();
+
 
     requestAnimationFrame(
         loop
